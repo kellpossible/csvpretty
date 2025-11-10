@@ -2,39 +2,39 @@
 source: tests/line_numbers_tests.rs
 expression: output
 ---
-────────────────────────────────────────────────────────────────────────────────
-      tablename                          │ comment                             │
-────┬────────────────────────────────────┬─────────────────────────────────────┬
- 1  │ after_payment_human_product_survey │ Per-product, per-human (who is a    │
-    │ _answers                           │ participant in any order item)      │
-    │                                    │ surveys, to be completed after      │
-    │                                    │ payment.                            │
- 2  │ after_payment_human_survey_answers │ Per-human (who is a participant in  │
-    │                                    │ any order item) surveys, to be      │
-    │                                    │ completed after payment.            │
- 3  │ after_payment_survey_answers       │ Answers to a survey filled in after │
-    │                                    │ payment, the survey is per-order.   │
- 4  │ before_cart_participant_group_surv │ A survey answer for a participant   │
-    │ ey_answers                         │ group for a given product           │
- 5  │ categories                         │                                     │
- 6  │ demo_payments                      │ used to store state for the demo    │
-    │                                    │ payments gateway                    │
- 7  │ event_offering_rules               │                                     │
- 8  │ event_offerings                    │ An offering of an event product at  │
-    │                                    │ a specific time/location            │
- 9  │ event_participants                 │ Participant(s) in an event from an  │
-    │                                    │ order. Can either be an individual  │
-    │                                    │ specified human, or a group         │
-    │                                    │ specified by a number and a minimum │
-    │                                    │ date of birth                       │
-10  │ events                             │ An event that is committed to being │
-    │                                    │ held (e.g. it has participants, or  │
-    │                                    │ a resource assigned to it)          │
-11  │ humans                             │                                     │
-12  │ migrations                         │                                     │
-13  │ order_authentications              │ Authentications for a session to    │
-    │                                    │ access a specific order             │
-14  │ order_human_survey_answers         │ A survey answer for a human in an   │
-    │                                    │ order                               │
-15  │ order_item_groups                  │ A group of order items              │
-16  │ order_items                        │                                     │
+───────────────────────────────────────────────────────────────────────────────
+      tablename                          │ comment                            
+────┬────────────────────────────────────┬─────────────────────────────────────
+ 1  │ after_payment_human_product_survey │ Per-product, per-human (who is a   
+    │ _answers                           │ participant in any order item)     
+    │                                    │ surveys, to be completed after     
+    │                                    │ payment.                           
+ 2  │ after_payment_human_survey_answers │ Per-human (who is a participant in 
+    │                                    │ any order item) surveys, to be     
+    │                                    │ completed after payment.           
+ 3  │ after_payment_survey_answers       │ Answers to a survey filled in after
+    │                                    │ payment, the survey is per-order.  
+ 4  │ before_cart_participant_group_surv │ A survey answer for a participant  
+    │ ey_answers                         │ group for a given product          
+ 5  │ categories                         │                                    
+ 6  │ demo_payments                      │ used to store state for the demo   
+    │                                    │ payments gateway                   
+ 7  │ event_offering_rules               │                                    
+ 8  │ event_offerings                    │ An offering of an event product at 
+    │                                    │ a specific time/location           
+ 9  │ event_participants                 │ Participant(s) in an event from an 
+    │                                    │ order. Can either be an individual 
+    │                                    │ specified human, or a group        
+    │                                    │ specified by a number and a minimum
+    │                                    │ date of birth                      
+10  │ events                             │ An event that is committed to being
+    │                                    │ held (e.g. it has participants, or 
+    │                                    │ a resource assigned to it)         
+11  │ humans                             │                                    
+12  │ migrations                         │                                    
+13  │ order_authentications              │ Authentications for a session to   
+    │                                    │ access a specific order            
+14  │ order_human_survey_answers         │ A survey answer for a human in an  
+    │                                    │ order                              
+15  │ order_item_groups                  │ A group of order items             
+16  │ order_items                        │

@@ -249,11 +249,13 @@ fn print_horizontal_border(col_widths: &[usize], row_num_width: usize, border_ty
         BorderType::Top => {
             // Top border: just a line across the header
             let row_area = if show_line_numbers { row_num_width + 3 } else { 0 };
-            let total_width: usize = row_area + col_widths.iter().map(|w| w + 3).sum::<usize>();
+            // Each column contributes width + 3 (space + content + space + separator)
+            // but the last column has no separator, so subtract 1
+            let total_width: usize = row_area + col_widths.iter().map(|w| w + 3).sum::<usize>() - 1;
             println!("{}", "─".repeat(total_width));
         }
         BorderType::HeaderSeparator => {
-            // Separator after header: ────┬────┬────┬
+            // Separator after header: ────┬────┬────
             if show_line_numbers {
                 // Row number area is: "{:>width$}  │" = row_num_width + 3 chars total
                 // The ┬ replaces the │, so we need row_num_width + 2 dashes before it
@@ -261,12 +263,11 @@ fn print_horizontal_border(col_widths: &[usize], row_num_width: usize, border_ty
                 print!("┬");
             }
             for (i, &width) in col_widths.iter().enumerate() {
-                // Each column prints: " {text}{padding} │" = 1 + width + 2 = width + 3 chars total
+                // Each column prints: " {text}{padding}" with optional " │" between
                 // The ┬ replaces the │, so we need width + 2 dashes before it
                 print!("{}", "─".repeat(width + 2));
+                // Print ┬ only between columns, not after the last one
                 if i < col_widths.len() - 1 {
-                    print!("┬");
-                } else {
                     print!("┬");
                 }
             }
@@ -280,9 +281,8 @@ fn print_horizontal_border(col_widths: &[usize], row_num_width: usize, border_ty
             }
             for (i, &width) in col_widths.iter().enumerate() {
                 print!("{}", "─".repeat(width + 2));
+                // Print ┴ only between columns, not after the last one
                 if i < col_widths.len() - 1 {
-                    print!("┴");
-                } else {
                     print!("┴");
                 }
             }
@@ -303,8 +303,10 @@ fn print_header_row(headers: &[&str], col_widths: &[usize], row_num_width: usize
 
         print!(" {}{}", header, " ".repeat(padding));
 
-        // Always print separator after each column (matching data row behavior)
-        print!(" │");
+        // Print separator only between columns, not after the last one
+        if i < headers.len() - 1 {
+            print!(" │");
+        }
     }
     println!();
 }
@@ -338,9 +340,8 @@ fn print_data_row(row_num: usize, record: &[String], col_widths: &[usize], row_n
 
             print!(" {}{}", text, " ".repeat(padding));
 
+            // Print separator only between columns, not after the last one
             if col_idx < wrapped_cells.len() - 1 {
-                print!(" │");
-            } else {
                 print!(" │");
             }
         }

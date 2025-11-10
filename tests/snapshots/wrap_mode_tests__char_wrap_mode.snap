@@ -2,13 +2,13 @@
 source: tests/wrap_mode_tests.rs
 expression: output
 ---
-────────────────────────────────────────────────────────────────────────────────
- product    │ description                                                      │
-────────────┬──────────────────────────────────────────────────────────────────┬
- Laptop     │ A high-performance laptop with 16GB RAM, 512GB SSD storage, and  │
-            │ a powerful Intel Core i7 processor for professional work and gam │
-            │ ing.                                                             │
- Smartphone │ The latest smartphone featuring a stunning 6.5-inch OLED display │
-            │ , triple camera system, and all-day battery life.                │
- Headphones │ Premium wireless noise-cancelling headphones with exceptional so │
-            │ und quality and comfortable over-ear design.                     │
+───────────────────────────────────────────────────────────────────────────────
+ product    │ description                                                     
+────────────┬──────────────────────────────────────────────────────────────────
+ Laptop     │ A high-performance laptop with 16GB RAM, 512GB SSD storage, and 
+            │ a powerful Intel Core i7 processor for professional work and gam
+            │ ing.                                                            
+ Smartphone │ The latest smartphone featuring a stunning 6.5-inch OLED display
+            │ , triple camera system, and all-day battery life.               
+ Headphones │ Premium wireless noise-cancelling headphones with exceptional so
+            │ und quality and comfortable over-ear design.

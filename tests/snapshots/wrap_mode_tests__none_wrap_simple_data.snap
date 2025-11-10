@@ -2,10 +2,10 @@
 source: tests/wrap_mode_tests.rs
 expression: output
 ---
-────────────────────────────────────
- name      │ age   │ city          │
-───────────┬───────┬───────────────┬
- Alice     │ 30    │ New York      │
- Bob       │ 25    │ Los Angeles   │
- Charlie   │ 35    │ Chicago       │
-───────────┴───────┴───────────────┴
+───────────────────────────────────
+ name      │ age   │ city         
+───────────┬───────┬───────────────
+ Alice     │ 30    │ New York     
+ Bob       │ 25    │ Los Angeles  
+ Charlie   │ 35    │ Chicago      
+───────────┴───────┴───────────────
