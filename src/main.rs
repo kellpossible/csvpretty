@@ -1,7 +1,62 @@
 use clap::Parser;
 use csv::ReaderBuilder;
+use owo_colors::{OwoColorize, Rgb};
 use std::io::{self, Read};
+use terminal_colorsaurus::{theme_mode, QueryOptions, ThemeMode};
 use unicode_width::UnicodeWidthStr;
+
+/// Color palette for dark terminal themes.
+/// Colors cycle through columns: Orange → Cyan → Purple → Pink → Yellow → (repeat)
+///
+/// These RGB values are taken from the csvlens project:
+/// https://github.com/YS-L/csvlens/blob/main/src/theme.rs
+const DARK_THEME_COLORS: [(u8, u8, u8); 5] = [
+    (253, 151, 31),  // Orange
+    (102, 217, 239), // Cyan
+    (190, 132, 255), // Purple
+    (249, 38, 114),  // Pink
+    (230, 219, 116), // Yellow
+];
+
+/// Color palette for light terminal themes.
+/// Darker variants of the dark theme colors for better contrast on light backgrounds.
+///
+/// These RGB values are taken from the csvlens project:
+/// https://github.com/YS-L/csvlens/blob/main/src/theme.rs
+const LIGHT_THEME_COLORS: [(u8, u8, u8); 5] = [
+    (207, 112, 0),   // Darker Orange
+    (0, 137, 179),   // Darker Cyan/Blue
+    (104, 77, 153),  // Darker Purple
+    (249, 0, 90),    // Darker Pink
+    (153, 143, 47),  // Darker Yellow/Olive
+];
+
+/// Detects the terminal's theme (dark/light) and returns the appropriate color palette.
+/// Queries the terminal using OSC escape sequences to determine background color.
+/// Falls back to dark theme if detection fails.
+fn detect_theme() -> &'static [(u8, u8, u8); 5] {
+    match theme_mode(QueryOptions::default()) {
+        Ok(ThemeMode::Dark) => &DARK_THEME_COLORS,
+        Ok(ThemeMode::Light) => &LIGHT_THEME_COLORS,
+        _ => &DARK_THEME_COLORS, // Default to dark theme on error
+    }
+}
+
+/// Gets the RGB color for a column index using modulo to cycle through the palette.
+/// Example: columns 0-4 use colors 0-4, column 5 wraps to color 0, etc.
+fn get_column_color(col_index: usize, theme: &[(u8, u8, u8); 5]) -> (u8, u8, u8) {
+    theme[col_index % theme.len()]
+}
+
+/// Configuration for table rendering.
+/// Consolidates display options to reduce function parameter counts.
+struct RenderConfig<'a> {
+    wrap_mode: WrapMode,
+    show_line_numbers: bool,
+    /// Theme colors if enabled. None when --no-color is used.
+    theme: Option<&'a [(u8, u8, u8); 5]>,
+    terminal_width: usize,
+}
 
 #[derive(Parser, Debug)]
 #[command(name = "csvpretty")]
@@ -14,6 +69,10 @@ struct Args {
     /// Show line numbers
     #[arg(short = 'n', long)]
     line_numbers: bool,
+
+    /// Disable column colors
+    #[arg(long)]
+    no_color: bool,
 }
 
 #[derive(Debug, Clone, Copy, clap::ValueEnum)]
@@ -65,45 +124,74 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .unwrap_or(80),
     };
 
+    // Detect theme and check if colors should be enabled
+    // Colors are enabled by default unless --no-color flag or NO_COLOR env var is set
+    let colors_enabled = !args.no_color && std::env::var("NO_COLOR").is_err();
+    let theme = if colors_enabled {
+        Some(detect_theme())
+    } else {
+        None
+    };
+
+    // Create render configuration
+    let config = RenderConfig {
+        wrap_mode: args.wrap,
+        show_line_numbers: args.line_numbers,
+        theme,
+        terminal_width,
+    };
+
     // Render the table
-    render_table(&headers, &records, terminal_width, args.wrap, args.line_numbers);
+    render_table(&headers, &records, &config);
 
     Ok(())
 }
 
-fn render_table(headers: &csv::StringRecord, records: &[Vec<String>], terminal_width: usize, wrap_mode: WrapMode, show_line_numbers: bool) {
+fn render_table(headers: &csv::StringRecord, records: &[Vec<String>], config: &RenderConfig) {
     let header_vec: Vec<&str> = headers.iter().collect();
 
     // Calculate row number width (for the leftmost column)
-    let row_num_width = if show_line_numbers {
+    let row_num_width = if config.show_line_numbers {
         records.len().to_string().len().max(1)
     } else {
         0
     };
 
     // Calculate column widths
-    let col_widths = calculate_column_widths(&header_vec, records, terminal_width, wrap_mode, row_num_width);
+    let col_widths = calculate_column_widths(&header_vec, records, config.terminal_width, config.wrap_mode, row_num_width);
 
     // Render top border
-    print_horizontal_border(&col_widths, row_num_width, BorderType::Top, show_line_numbers);
+    print_horizontal_border(&col_widths, row_num_width, BorderType::Top, config.show_line_numbers);
 
     // Render header
-    print_header_row(&header_vec, &col_widths, row_num_width, show_line_numbers);
+    print_header_row(&header_vec, &col_widths, row_num_width, config);
 
     // Render separator after header
-    print_horizontal_border(&col_widths, row_num_width, BorderType::HeaderSeparator, show_line_numbers);
+    print_horizontal_border(&col_widths, row_num_width, BorderType::HeaderSeparator, config.show_line_numbers);
 
     // Render data rows
     for (idx, record) in records.iter().enumerate() {
-        print_data_row(idx + 1, record, &col_widths, row_num_width, wrap_mode, show_line_numbers);
+        print_data_row(idx + 1, record, &col_widths, row_num_width, config);
     }
 
     // Render bottom border (only for no-wrap mode to match the example)
-    if matches!(wrap_mode, WrapMode::None) {
-        print_horizontal_border(&col_widths, row_num_width, BorderType::Bottom, show_line_numbers);
+    if matches!(config.wrap_mode, WrapMode::None) {
+        print_horizontal_border(&col_widths, row_num_width, BorderType::Bottom, config.show_line_numbers);
     }
 }
 
+/// Calculates column widths based on content and terminal constraints.
+///
+/// For no-wrap mode: columns are sized to fit their content exactly (table may exceed terminal width).
+///
+/// For wrap modes: uses a "waterfall" allocation strategy:
+/// 1. Calculate natural width (max content width) for each column
+/// 2. If all columns fit naturally, use those widths
+/// 3. Otherwise: allocate natural width to smallest columns first, then distribute
+///    remaining space proportionally to larger columns that need wrapping
+///
+/// This ensures narrow columns don't get over-allocated space while wide columns share
+/// the burden of wrapping.
 fn calculate_column_widths(headers: &[&str], records: &[Vec<String>], terminal_width: usize, wrap_mode: WrapMode, row_num_width: usize) -> Vec<usize> {
     let num_cols = headers.len();
 
@@ -291,9 +379,12 @@ fn print_horizontal_border(col_widths: &[usize], row_num_width: usize, border_ty
     }
 }
 
-fn print_header_row(headers: &[&str], col_widths: &[usize], row_num_width: usize, show_line_numbers: bool) {
+/// Prints the header row with optional colors and bold formatting.
+/// Each column gets a color from the theme palette, cycling through colors.
+/// Headers are always bold when colors are enabled.
+fn print_header_row(headers: &[&str], col_widths: &[usize], row_num_width: usize, config: &RenderConfig) {
     // Match the data row format: "{:>width$}  │" = row_num_width + 3 chars (if line numbers enabled)
-    if show_line_numbers {
+    if config.show_line_numbers {
         print!("{}", " ".repeat(row_num_width + 3));
     }
     for (i, &header) in headers.iter().enumerate() {
@@ -301,7 +392,13 @@ fn print_header_row(headers: &[&str], col_widths: &[usize], row_num_width: usize
         let header_width = UnicodeWidthStr::width(header);
         let padding = width.saturating_sub(header_width);
 
-        print!(" {}{}", header, " ".repeat(padding));
+        // Apply color if theme is enabled (same color as data cells in this column)
+        if let Some(theme) = config.theme {
+            let (r, g, b) = get_column_color(i, theme);
+            print!(" {}{}", header.color(Rgb(r, g, b)).bold(), " ".repeat(padding));
+        } else {
+            print!(" {}{}", header, " ".repeat(padding));
+        }
 
         // Print separator only between columns, not after the last one
         if i < headers.len() - 1 {
@@ -311,23 +408,26 @@ fn print_header_row(headers: &[&str], col_widths: &[usize], row_num_width: usize
     println!();
 }
 
-fn print_data_row(row_num: usize, record: &[String], col_widths: &[usize], row_num_width: usize, wrap_mode: WrapMode, show_line_numbers: bool) {
+/// Prints a data row with optional line numbers and colors.
+/// Handles multi-line cells by wrapping text and aligning all cells to the tallest cell.
+/// Each column uses the same color as its header (cycling through the palette).
+fn print_data_row(row_num: usize, record: &[String], col_widths: &[usize], row_num_width: usize, config: &RenderConfig) {
     // Wrap each cell and determine max lines needed
     let wrapped_cells: Vec<Vec<String>> = record.iter()
         .zip(col_widths.iter())
-        .map(|(cell, &width)| wrap_text(cell, width, wrap_mode))
+        .map(|(cell, &width)| wrap_text(cell, width, config.wrap_mode))
         .collect();
 
     let max_lines = wrapped_cells.iter().map(|lines| lines.len()).max().unwrap_or(1);
 
-    // Print each line
+    // Print each line of the multi-line row
     for line_idx in 0..max_lines {
-        if show_line_numbers {
+        if config.show_line_numbers {
             if line_idx == 0 {
                 // First line: show row number
                 print!("{:>width$}  │", row_num, width = row_num_width);
             } else {
-                // Subsequent lines: empty row number
+                // Subsequent lines: empty row number area for alignment
                 print!("{}  │", " ".repeat(row_num_width));
             }
         }
@@ -338,7 +438,13 @@ fn print_data_row(row_num: usize, record: &[String], col_widths: &[usize], row_n
             let text_width = UnicodeWidthStr::width(text);
             let padding = width.saturating_sub(text_width);
 
-            print!(" {}{}", text, " ".repeat(padding));
+            // Apply color if theme is enabled
+            if let Some(theme) = config.theme {
+                let (r, g, b) = get_column_color(col_idx, theme);
+                print!(" {}{}", text.color(Rgb(r, g, b)), " ".repeat(padding));
+            } else {
+                print!(" {}{}", text, " ".repeat(padding));
+            }
 
             // Print separator only between columns, not after the last one
             if col_idx < wrapped_cells.len() - 1 {

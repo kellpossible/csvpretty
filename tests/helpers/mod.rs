@@ -43,8 +43,9 @@ pub fn run_csvpretty_in_pty(
         pixel_height: 0,
     })?;
 
-    // Build command
+    // Build command - always add --no-color first for tests
     let mut cmd = CommandBuilder::new(&binary_path);
+    cmd.arg("--no-color");
     for arg in args {
         cmd.arg(arg);
     }
@@ -74,14 +75,20 @@ pub fn run_csvpretty_in_pty(
     Ok(cleaned)
 }
 
-/// Clean PTY output by removing echoed input and control characters
-fn clean_pty_output(output: &str, input: &str) -> String {
+/// Cleans PTY output by removing echoed input and control characters.
+///
+/// PTYs echo stdin back to the output and inject control characters. This function:
+/// 1. Finds the table's top border (line with >10 '─' characters) to skip echoed CSV
+/// 2. Strips ANSI control characters and PTY artifacts (^D, ^C, ␈, ␊)
+/// 3. Extracts only the table border from the first line (sometimes CSV is concatenated)
+/// 4. Trims empty lines from start/end
+fn clean_pty_output(output: &str, _input: &str) -> String {
     // Split output into lines
     let lines: Vec<&str> = output.lines().collect();
 
     // Find the start of the table by looking for a line with many ─ characters
-    // (the top border) The PTY may add control characters, so we check if the line
-    // contains a significant number of dashes
+    // (the top border). The PTY may add control characters, so we check if the line
+    // contains a significant number of dashes.
     let start_idx = lines.iter().position(|line| {
         let dash_count = line.chars().filter(|&c| c == '─').count();
         dash_count > 10 // Top border should have many dashes
