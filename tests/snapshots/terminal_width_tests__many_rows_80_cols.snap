@@ -1,0 +1,40 @@
+---
+source: tests/terminal_width_tests.rs
+expression: output
+---
+────────────────────────────────────────────────────────────────────────────────
+ tablename                             │ comment                               │
+───────────────────────────────────────┬───────────────────────────────────────┬
+ after_payment_human_product_survey_an │ Per-product, per-human (who is a      │
+ swers                                 │ participant in any order item)        │
+                                       │ surveys, to be completed after        │
+                                       │ payment.                              │
+ after_payment_human_survey_answers    │ Per-human (who is a participant in    │
+                                       │ any order item) surveys, to be        │
+                                       │ completed after payment.              │
+ after_payment_survey_answers          │ Answers to a survey filled in after   │
+                                       │ payment, the survey is per-order.     │
+ before_cart_participant_group_survey_ │ A survey answer for a participant     │
+ answers                               │ group for a given product             │
+ categories                            │                                       │
+ demo_payments                         │ used to store state for the demo      │
+                                       │ payments gateway                      │
+ event_offering_rules                  │                                       │
+ event_offerings                       │ An offering of an event product at a  │
+                                       │ specific time/location                │
+ event_participants                    │ Participant(s) in an event from an    │
+                                       │ order. Can either be an individual    │
+                                       │ specified human, or a group specified │
+                                       │ by a number and a minimum date of     │
+                                       │ birth                                 │
+ events                                │ An event that is committed to being   │
+                                       │ held (e.g. it has participants, or a  │
+                                       │ resource assigned to it)              │
+ humans                                │                                       │
+ migrations                            │                                       │
+ order_authentications                 │ Authentications for a session to      │
+                                       │ access a specific order               │
+ order_human_survey_answers            │ A survey answer for a human in an     │
+                                       │ order                                 │
+ order_item_groups                     │ A group of order items                │
+ order_items                           │                                       │

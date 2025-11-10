@@ -1,0 +1,14 @@
+[package]
+name = "csvpretty"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+csv = "1.4"
+unicode-width = "0.2"
+terminal_size = "0.4"
+clap = { version = "4.5", features = ["derive"] }
+
+[dev-dependencies]
+insta = "1.43"
+portable-pty = "0.9"

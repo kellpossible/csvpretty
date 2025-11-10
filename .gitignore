@@ -1,0 +1,5 @@
+/target
+
+# Insta pending snapshots
+tests/**/*.snap.new
+tests/**/*.snap.new.*
