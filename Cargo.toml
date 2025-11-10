@@ -2,6 +2,13 @@
 name = "csvpretty"
 version = "0.1.0"
 edition = "2024"
+authors = ["Luke Frisken <l.frisken@gmail.com>"]
+description = "A command-line tool that formats CSV input into tables with Unicode box-drawing characters"
+license = "MIT"
+repository = "https://github.com/kellpossible/csvpretty"
+readme = "README.md"
+keywords = ["csv", "cli", "table", "formatting", "pretty-print"]
+categories = ["command-line-utilities", "text-processing"]
 
 [dependencies]
 csv = "1.4"
