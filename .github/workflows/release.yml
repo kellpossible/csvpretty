@@ -83,3 +83,4 @@ jobs:
           file: target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
           asset_name: ${{ matrix.asset_name }}
           tag: ${{ github.event.inputs.tag || github.ref }}
+          overwrite: true
